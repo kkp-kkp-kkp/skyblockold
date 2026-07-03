@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>XP → Губки</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #1e1e1e;
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .box {
+        background: #2a2a2a;
+        padding: 25px;
+        border-radius: 12px;
+        width: 400px;
+        text-align: center;
+        box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    }
+
+    h2 {
+        margin-top: 0;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 16px;
+        border: none;
+        border-radius: 6px;
+        outline: none;
+    }
+
+    button {
+        margin-top: 15px;
+        padding: 10px;
+        width: 100%;
+        font-size: 16px;
+        border: none;
+        border-radius: 6px;
+        background: #4CAF50;
+        color: white;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #45a049;
+    }
+
+    .result {
+        margin-top: 20px;
+        font-size: 17px;
+        line-height: 1.5;
+    }
+
+    .error {
+        color: #ff6b6b;
+    }
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+    <h2>XP → Губки</h2>
+    <p>Введи уровни</p>
+
+
+<input id="levelsInput" placeholder="12345+666+777 (+ отделяет аккаунты)">
+<button onclick="calculate()">Посчитать</button>
+
+<div class="result" id="result"></div>
+
+
+</div>
+
+<script>
+// Формула XP (1.12.2)
+function xpForLevel(level) {
+    if (level <= 16) {
+        return level * level + 6 * level;
+    } else if (level <= 31) {
+        return 2.5 * level * level - 40.5 * level + 360;
+    } else {
+        return 4.5 * level * level - 162.5 * level + 2220;
+    }
+}
+
+const COST_LEVELS = 150;
+const COST_XP = xpForLevel(COST_LEVELS);
+const STACK = 64;
+const ISLAND_LEVELS_PER_SPONGE = 1500;
+const COST_MONEY = 500000;
+
+function calculate() {
+    const input = document.getElementById("levelsInput").value.trim();
+    const resultEl = document.getElementById("result");
+
+    if (!input) {
+        resultEl.innerHTML = "<span class='error'>Введите данные</span>";
+        return;
+    }
+
+    const parts = input.split("+");
+    let totalXP = 0;
+
+    for (let part of parts) {
+        const level = parseFloat(part.trim());
+
+        if (isNaN(level) || level < 0) {
+            resultEl.innerHTML = "<span class='error'>Ошибка ввода</span>";
+            return;
+        }
+
+        totalXP += xpForLevel(level);
+    }
+
+    const sponges = Math.floor(totalXP / COST_XP);
+    const stacks = Math.floor(sponges / STACK);
+    const remainder = sponges % STACK;
+    const islandLevels = sponges * ISLAND_LEVELS_PER_SPONGE;
+    const money = sponges * COST_MONEY;
+
+    resultEl.innerHTML = `
+        🧽 Губок: <b>${sponges}</b> (${stacks} стаков + ${remainder} шт)<br>
+        💎 Уровни острова: <b>${islandLevels.toLocaleString()}</b><br>
+        💰 Нужно денег: <b>${money.toLocaleString()}</b>
+    `;
+}
+
+document.getElementById("levelsInput").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        calculate();
+    }
+});
+</script>
+
+</body>
+</html>
