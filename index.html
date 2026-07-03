@@ -343,11 +343,25 @@ data.addEventListener("input", () => {
 
         // если это ссылка
         if(val.startsWith("http")){
-            let hash = val.split("#")[1];
-            if(hash) val = hash;
+            let res = await fetch(val);
+            if(!res.ok) throw new Error("HTTP ошибка");
+
+            let text = await res.text();
+
+            // пробуем как JSON
+            try {
+                arr = JSON.parse(text);
+            } catch {
+                // иначе считаем что это base64
+                arr = decode(text);
+            }
+        } 
+        // 👉 если это просто строка
+        else {
+            arr = decode(val);
         }
 
-        let decoded = decode(val);
+        let decoded = arr;
         applyData(decoded);
 
         updatePlayers();
