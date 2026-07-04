@@ -330,25 +330,29 @@ function updatePlayers(){
     arr.sort((a, b) => {
         const normalize = s => s.trim().toLowerCase();
     
-        const group = s => {
-            s = normalize(s);
+        const firstChar = s => normalize(s)[0] || "";
     
-            if (/^[^a-zа-яё]/i.test(s)) return 0; // спецсимволы + цифры
-            if (/^[a-z]/i.test(s)) return 1;      // английский
-            if (/^[а-яё]/i.test(s)) return 2;     // русский
-            return 3;
+        const charPriority = c => {
+            if (c === "!") return 0;
+            if (c === "#") return 1;
+            if (/[0-9]/.test(c)) return 2;
+            if (c === "_") return 3;
+            if (/[a-z]/.test(c)) return 4;
+            if (/[а-яё]/.test(c)) return 5;
+            return 6;
         };
     
-        let g1 = group(a);
-        let g2 = group(b);
+        let A = normalize(a);
+        let B = normalize(b);
     
-        if (g1 !== g2) return g1 - g2;
+        let p1 = charPriority(firstChar(A));
+        let p2 = charPriority(firstChar(B));
     
-        return normalize(a).localeCompare(
-            normalize(b),
-            ['en', 'ru'],
-            { sensitivity: 'base' }
-        );
+        // 👉 сначала по приоритету символа
+        if (p1 !== p2) return p1 - p2;
+    
+        // 👉 потом обычная сортировка внутри группы
+        return A.localeCompare(B, ['en', 'ru'], { sensitivity: 'base' });
     });
 
     players.innerHTML = "<option value=''>все</option>";
