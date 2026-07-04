@@ -326,11 +326,8 @@ function updatePlayers(){
 
     let arr = Array.from(set);
 
-    // 👉 сортировка: сначала по длине, потом по алфавиту
-    arr.sort((a, b) => {
-        if (a.length !== b.length) return a.length - b.length;
-        return a.localeCompare(b);
-    });
+    // 👉 сортировка A-Z
+    arr.sort((a, b) => a.localeCompare(b, 'ru'));
 
     players.innerHTML = "<option value=''>все</option>";
 
