@@ -297,7 +297,7 @@ async function loadData(){
 function updateData(){
     let code = encode();
     data.value = code;
-    location.hash = code;
+    // location.hash = code;
 }
 
 function copyData(){
@@ -412,11 +412,11 @@ function fit(){
 // ===== INIT =====
 updatePlayers();
 
-if(location.hash.length > 1){
-    try{
-        applyData(decode(location.hash));
-    }catch(e){}
-}
+// if(location.hash.length > 1){
+//     try{
+//         applyData(decode(location.hash));
+//     }catch(e){}
+// }
 window.addEventListener("load", async () => {
     try {
         const url = "https://kkp-kkp-kkp.github.io/sbo/data";
