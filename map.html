@@ -11,9 +11,14 @@ body { margin:0; font-family:Arial; background:#111; color:#eee; }
     text-align:center; z-index:10;
 }
 #cursor {
-    position:fixed; left:10px; top:10px;
-    background:#000; padding:4px 6px;
-    font-size:12px;
+    position: fixed;
+    left: 10px;
+    top: 70px; /* было 10px → уехало под topbar */
+    background: #000;
+    padding: 4px 6px;
+    font-size: 12px;
+    z-index: 20; /* ВАЖНО */
+    pointer-events: none;
 }
 #side {
     position:fixed; right:0; top:60px;
@@ -154,14 +159,28 @@ canvas.onmousedown=e=>{
 
 window.onmouseup=()=>drag=false;
 
-window.onmousemove=e=>{
-    if(drag){
-        offX=e.clientX-startX;
-        offZ=e.clientY-startZ;
+window.onmousemove = e => {
+    const rect = canvas.getBoundingClientRect();
+
+    let sx = e.clientX - rect.left;
+    let sz = e.clientY - rect.top;
+
+    // движение карты
+    if (drag) {
+        offX += e.movementX;
+        offZ += e.movementY;
         draw();
     }
-    let w=screenToWorld(e.clientX,e.clientY-60);
-    document.getElementById("cursor").textContent="X:"+ (w[0]|0)+" Z:"+(w[1]|0);
+
+    // если курсор вне canvas — не показываем
+    if (sx < 0 || sz < 0 || sx > rect.width || sz > rect.height) {
+        return;
+    }
+
+    let w = screenToWorld(sx, sz);
+
+    document.getElementById("cursor").textContent =
+        "X:" + Math.floor(w[0]) + " Z:" + Math.floor(w[1]);
 };
 
 canvas.onwheel=e=>{
@@ -371,19 +390,56 @@ function updatePlayers(){
 players.onchange=draw;
 
 // ===== SEARCH =====
-function nearest(){
-    let v=coord.value.split(" ").map(Number);
-    let best=null,dist=2000;
+function smoothMoveTo(targetX, targetZ, duration = 600){
+    let startX = offX;
+    let startZ = offZ;
 
-    islands.forEach((i,idx)=>{
-        let d=Math.hypot(i.x-v[0],i.z-v[1]);
-        if(d<dist){dist=d; best=idx;}
+    let [sx, sz] = worldToScreen(targetX, targetZ);
+
+    let endX = canvas.width / 2 - (sx - offX);
+    let endZ = canvas.height / 2 - (sz - offZ);
+
+    let startTime = performance.now();
+
+    function animate(t){
+        let p = (t - startTime) / duration;
+        if(p > 1) p = 1;
+
+        // easeInOut
+        let k = p < 0.5
+            ? 2*p*p
+            : 1 - Math.pow(-2*p + 2, 2)/2;
+
+        offX = startX + (endX - startX) * k;
+        offZ = startZ + (endZ - startZ) * k;
+
+        draw();
+
+        if(p < 1) requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+}
+
+function nearest(){
+    let v = coord.value.split(" ").map(Number);
+    let best = null, dist = 2000;
+
+    islands.forEach((i, idx) => {
+        let d = Math.hypot(i.x - v[0], i.z - v[1]);
+        if(d < dist){
+            dist = d;
+            best = idx;
+        }
     });
 
-    if(best!==null){
-        active=best;
+    if(best !== null){
+        active = best;
         show();
         draw();
+
+        let i = islands[best];
+        smoothMoveTo(i.x, i.z);
     }
 }
 
